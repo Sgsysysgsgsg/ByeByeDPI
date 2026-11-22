@@ -1,0 +1,43 @@
+name: Android APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+      - "work/**"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout with native submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android NDK and CMake
+        run: sdkmanager "ndk;27.2.12479018" "cmake;3.22.1"
+
+      - name: Build release APK
+        run: ./gradlew --no-daemon --stacktrace assembleRelease
+
+      - name: Upload APKs
+        uses: actions/upload-artifact@v4
+        with:
+          name: ByeByeDPI-Roblox-Edition
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+          retention-days: 14
