@@ -25,11 +25,16 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Install Android NDK and CMake
-        run: sdkmanager "ndk;27.2.12479018" "cmake;3.22.1"
+      # GitHub-hosted Ubuntu runners already include the Android SDK.
+      # Avoid setup-android's legacy "tools" package, which no longer exists.
+      - name: Install Android SDK components
+        shell: bash
+        run: |
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT}}"
+          SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -type f -name sdkmanager | head -n 1)"
+          test -n "$SDKMANAGER"
+          yes | "$SDKMANAGER" --licenses >/dev/null
+          "$SDKMANAGER" "ndk;27.2.12479018" "cmake;3.22.1"
 
       - name: Build release APK
         run: ./gradlew --no-daemon --stacktrace assembleRelease
